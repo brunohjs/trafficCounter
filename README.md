@@ -1,2 +1,2 @@
 # traffic_count
-Trabalho da disciplina de Tóicos de Sistemas Gráficos - Contador de Tráfico
+Trabalho da disciplina de Tópicos de Sistemas Gráficos - Contador de Tráfico.
