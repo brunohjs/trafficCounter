@@ -74,17 +74,11 @@ while True:
         stat = stats[i]
         centroid = (int(centroids[i][0]), int(centroids[i][1]))
 
-        '''
-        if classify(area, stat[cv2.CC_STAT_WIDTH], stat[cv2.CC_STAT_HEIGHT]) != 'truck':
-            print((area, stat[cv2.CC_STAT_WIDTH], stat[cv2.CC_STAT_HEIGHT]), classify(area, stat[cv2.CC_STAT_WIDTH], stat[cv2.CC_STAT_HEIGHT]))
-        '''
-
         if stat[cv2.CC_STAT_AREA] >= min_area:
             detectVehicle(stat, centroid)
 
     #cv2.putText(frame,'COUNT: %r' %i, (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
     cv2.imshow("Track", frame)
-    
     cv2.imshow('BK', bkframe)
 
     key = cv2.waitKey(100)
