@@ -3,7 +3,7 @@ import cv2
 import sys
 
 
-def classify(area, width, height):
+def detectVehicle(area, width, height):
     car = (area <= min_area+(min_area*1.0)) and (area > min_area)
     truck = area > min_area*4
     if car:
@@ -38,11 +38,17 @@ road_points = [[90,180], [5,244], [202,244], [214,180]]
 road_area = np.array(road_points, np.int32)
 road_area = road_area.reshape((-1,1,2))
 
+cv2.namedWindow("BK");
+cv2.moveWindow("BK", 400, 0)
+
 while True:
     ret, frame = capture.read()
+
     bkframe = backsub.apply(frame, None, 0.01)
-    bkframe = cv2.medianBlur(bkframe, 5)
-    bkframe = cv2.blur(bkframe, (5,5))
+    bkframe = cv2.medianBlur(bkframe, 9)
+    bkframe = cv2.blur(bkframe, (7,7))
+    cv2.polylines(frame, [road_area], True, (0,255,0), 3)
+
     num, labels, stats, centroids = cv2.connectedComponentsWithStats(bkframe, ltype=cv2.CV_16U)
     min_area = 500
     candidates = list()
@@ -68,18 +74,15 @@ while True:
                 cv2.circle(frame, centroid, 3, (0,255,255), -1)
                 cv2.putText(
                     frame, 
-                    classify(area, stat[cv2.CC_STAT_WIDTH], stat[cv2.CC_STAT_HEIGHT]),
+                    detectVehicle(area, stat[cv2.CC_STAT_WIDTH], stat[cv2.CC_STAT_HEIGHT]),
                     initial_point_text, 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255), 1
                 )
- 
-    cv2.polylines(frame, [road_area], True, (0,255,0), 3)
-    #contours, hierarchy = cv2.findContours(road_area, cv2.RETR_TREE, cv2.CHAIN_APPROX_SIMPLE)
-    #cv2.drawContours(frame, contours, -1, (255,255,0), 3)
 
     #cv2.putText(frame,'COUNT: %r' %i, (10,30), cv2.FONT_HERSHEY_SIMPLEX, 1, (255, 0, 0), 2)
     cv2.imshow("Track", frame)
-    #cv2.imshow('BK', bkframe)
+    
+    cv2.imshow('BK', bkframe)
 
     key = cv2.waitKey(100)
     if key == ord('q'):
