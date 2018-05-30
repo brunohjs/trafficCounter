@@ -45,6 +45,10 @@ def classify(area, width, height):
         return 'other'
 
 
+def tracking(centroid):
+
+
+
 def inSquare(area, point, way):
     high_y = area[1][1]
     low_y = area[0][1]
@@ -59,8 +63,15 @@ def inSquare(area, point, way):
             return False
 
 
+def addFrame(frame, buffer, max_size=10):
+    if len(buffer) > max_size:
+        buffer.pop()
+    buffer.insert(0, frame)
+    return buffer
+
 VIDEO_SOURCE = sys.argv[1]
 min_area = 500
+buffer_frames = list()
 
 capture = cv2.VideoCapture(VIDEO_SOURCE)
 backsub = cv2.bgsegm.createBackgroundSubtractorMOG()
@@ -77,6 +88,7 @@ cv2.namedWindow('Track')
 
 while True:
     ret, frame = capture.read()
+    addFrame(frame, buffer_frames, 10)
     
     bkframe = backsub.apply(frame, None, 0.01)
     bkframe = cv2.medianBlur(bkframe, 7)
