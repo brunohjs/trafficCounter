@@ -1,5 +1,6 @@
 import numpy as np
 import cv2
+import sys
 
 
 def classify(area, width, height):
@@ -18,7 +19,6 @@ def inSquare(area, point, way):
     low_y = area[0][1]
     high_x = int((area[2][0]+area[3][0])/2) + 5
     low_x = int((area[0][0]+area[1][0])/2) - 5
-    print(high_x, low_x)
     if way == 'bottom-up':
         in_y = point[1] < high_y and point[1] > low_y
         in_x = point[0] < high_x and point[0] > low_x
@@ -29,7 +29,7 @@ def inSquare(area, point, way):
 
 
 
-VIDEO_SOURCE = 'video.mp4'
+VIDEO_SOURCE = sys.argv[1]
 
 capture = cv2.VideoCapture(VIDEO_SOURCE) 
 backsub = cv2.bgsegm.createBackgroundSubtractorMOG()
