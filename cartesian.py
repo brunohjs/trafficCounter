@@ -12,4 +12,5 @@ def module(vector):
 def angleVectors(u, v):
     scalar = u[0] * v[0] + u[1] * v[1]
     mod = module(u) * module(v)
-    return math.degrees(math.cos(scalar/mod))
+    angle = math.cos(scalar/mod)
+    return math.degrees(angle)
