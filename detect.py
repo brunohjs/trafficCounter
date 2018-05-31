@@ -1,28 +1,18 @@
 from Vehicle import Vehicle
+from cartesian import distance
 import numpy as np
 import cv2
 import sys
 import time
-import math
+
+VIDEO_SOURCE = sys.argv[1]
+MIN_AREA = 500
 
 '''
 def on_mouse(event, x, y, buttons, user_param):
     if event == cv2.EVENT_LBUTTONDOWN:
         polygon.append([x, y])
 '''
-
-def drawVehicle(frame, stat, area, centroid):
-    initial_point = (stat[cv2.CC_STAT_LEFT], stat[cv2.CC_STAT_TOP])
-    final_point = (initial_point[0] + stat[cv2.CC_STAT_WIDTH], initial_point[1] + stat[cv2.CC_STAT_HEIGHT])
-    initial_point_text = (initial_point[0], initial_point[1] - 5)
-    cv2.rectangle(frame, initial_point, final_point, (0, 0, 255), 1)
-    cv2.circle(frame, centroid, 3, (0,255,255), -1)
-    cv2.putText(
-        frame, 
-        classify(area, stat[cv2.CC_STAT_WIDTH], stat[cv2.CC_STAT_HEIGHT]),
-        initial_point_text, 
-        cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255), 1
-    )
 
 def detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, road_points):
     points = list()
@@ -31,29 +21,18 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, ro
         area = stat[cv2.CC_STAT_AREA]
         centroid = (int(centroids[i][0]), int(centroids[i][1]))
 
-        if (area >= min_area) and inSquare(road_points, centroid, 'bottom-up'):
-            drawVehicle(frame, stat, area, centroid)
-
+        if (area >= MIN_AREA) and inSquare(road_points, centroid, 'bottom-up'):
             if not vehicles:
-                vehicles.append(Vehicle(frame_id, centroid))
+                vehicles.append(Vehicle(len(vehicles), frame_id, centroid, stat))
             else:
-                points.append(centroid)
+                points.append([centroid, stat])
+            drawVehicle(frame, stat, area, centroid, vehicles[-1].vid)
             
     if buffer_frames:
         vehicles = findVehicles(vehicles, buffer_frames[0], frame_id, 30)
     if points:
         buffer_frames = addFrame(points, buffer_frames, 1)
     return buffer_frames, frame
-
-def classify(area, width, height):
-    car = (area <= min_area+(min_area*1.0)) and (area > min_area)
-    truck = area > min_area*4
-    if car:
-        return 'car'
-    elif truck:
-        return 'truck'
-    else:
-        return 'other'
 
 def inSquare(area, point, way):
     high_y = area[1][1]
@@ -68,12 +47,12 @@ def inSquare(area, point, way):
         else:
             return False
 
-def findVehicles(vehicles, points, frame, max_distance=40):
+def findVehicles(vehicles, points, frame_id, max_distance=40):
     for vehicle in vehicles:
         found = False
         for point in points:
-            if distance(vehicle.current_pose, point) <= max_distance:
-                vehicle.setCurrentPose(point)
+            if distance(vehicle.current_pose, point[0]) <= max_distance:
+                vehicle.setCurrentPose(point[0], point[1], frame_id)
                 points.remove(point)
                 found = True
                 break
@@ -81,7 +60,7 @@ def findVehicles(vehicles, points, frame, max_distance=40):
             vehicle.incrementNoFrame()
     if points:
         for point in points:
-            vehicles.append(Vehicle(frame, point))
+            vehicles.append(Vehicle(len(vehicles), frame_id, point[0], point[1]))
     return vehicles
 
 def addFrame(frame, buffer, max_size=10):
@@ -93,47 +72,48 @@ def addFrame(frame, buffer, max_size=10):
 
 #def inCars(centroid):
 
+def main():
+    vehicles = list()
+    buffer_frames = list()
 
-VIDEO_SOURCE = sys.argv[1]
-min_area = 500
-vehicles = list()
-vehicle_counter = 0
-buffer_frames = list()
+    capture = cv2.VideoCapture(VIDEO_SOURCE)
+    backsub = cv2.bgsegm.createBackgroundSubtractorMOG()
 
-capture = cv2.VideoCapture(VIDEO_SOURCE)
-backsub = cv2.bgsegm.createBackgroundSubtractorMOG()
+    #cv2.setMouseCallback("Draw Polygon", on_mouse)
 
-#cv2.setMouseCallback("Draw Polygon", on_mouse)
+    road_points = [[90,180], [5,244], [202,244], [214,180]]     #video.mp4
+    road_area = np.array(road_points, np.int32)
+    road_area = road_area.reshape((-1,1,2))
 
-road_points = [[90,180], [5,244], [202,244], [214,180]]     #video.mp4
-road_area = np.array(road_points, np.int32)
-road_area = road_area.reshape((-1,1,2))
+    cv2.namedWindow('Background')
+    cv2.moveWindow('Background', 400, 0)
+    cv2.namedWindow('Track')
 
-cv2.namedWindow('Background')
-cv2.moveWindow('Background', 400, 0)
-cv2.namedWindow('Track')
+    while capture.isOpened():
+        frame_id = int(capture.get(1))
+        ret, frame = capture.read()
+        
+        bkframe = backsub.apply(frame, None, 0.01)
+        bkframe = cv2.medianBlur(bkframe, 7)
+        bkframe = cv2.blur(bkframe, (7,7))
 
-while capture.isOpened():
-    frame_id = int(capture.get(1))
-    ret, frame = capture.read()
-    
-    bkframe = backsub.apply(frame, None, 0.01)
-    bkframe = cv2.medianBlur(bkframe, 7)
-    bkframe = cv2.blur(bkframe, (7,7))
+        num, labels, stats, centroids = cv2.connectedComponentsWithStats(bkframe, ltype=cv2.CV_16U)
 
-    num, labels, stats, centroids = cv2.connectedComponentsWithStats(bkframe, ltype=cv2.CV_16U)
+        buffer_frames, frame = detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, road_points)
+        for vehicle in vehicles:
+            vehicle.show()
+            vehicle.drawTrack(frame)
 
-    buffer_frames, frame = detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, road_points)
-    for vehicle in vehicles:
-        vehicle.show()
-        vehicle.drawTrack(frame)
+        cv2.polylines(frame, [road_area], True, (0,255,0), 3)
+        #cv2.putText(frame,'COUNT: %r' %vehicle_counter, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
 
-    cv2.polylines(frame, [road_area], True, (0,255,0), 3)
-    #cv2.putText(frame,'COUNT: %r' %vehicle_counter, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+        cv2.imshow('Track', frame)
+        cv2.imshow('Background', bkframe)
+        time.sleep(1)
 
-    cv2.imshow('Track', frame)
-    cv2.imshow('Background', bkframe)
-    #time.sleep(2)
+        if cv2.waitKey(100) == ord('q'):
+                break
 
-    if cv2.waitKey(100) == ord('q'):
-            break
+
+if __name__ == '__main__':
+    main()
