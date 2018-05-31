@@ -3,6 +3,7 @@ import numpy as np
 import cv2
 import sys
 import time
+import math
 
 '''
 def on_mouse(event, x, y, buttons, user_param):
@@ -10,22 +11,35 @@ def on_mouse(event, x, y, buttons, user_param):
         polygon.append([x, y])
 '''
 
-def detectVehicle(stats, centroids, frame, frame_id, vehicle_counter):
+def distance(p1, p2):
+    return math.sqrt((p1[0]-p2[0])**2 + (p1[1]-p2[1])**2)
+
+def getEuclidean(centroid, buffer):
+    print(centroid)
+    for points in buffer[:3]:
+        for point in points:
+            if centroid != point:
+                d = math.sqrt((centroid[0]-point[0])**2 + (centroid[1]-point[1])**2)
+                print(buffer.index(points), point, d)
+    print('\n\n')
+
+def detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicle_counter):
+    points = list()
     for i in range(len(stats)):
         stat = stats[i]
         area = stat[cv2.CC_STAT_AREA]
         centroid = (int(centroids[i][0]), int(centroids[i][1]))
-        
         if area >= min_area:
-            vehicle_id = str(frame_id) + str(centroid[0]) + str(centroid[1])
-            vehicles.append(Vehicle(vehicle_id, frame, centroid))
+            
+            #vehicles.append(Vehicle(vehicle_id, frame, centroid))
             
             initial_point = (stat[cv2.CC_STAT_LEFT], stat[cv2.CC_STAT_TOP])
             initial_point_text = (initial_point[0], initial_point[1] - 5)
             final_point = (initial_point[0] + stat[cv2.CC_STAT_WIDTH], initial_point[1] + stat[cv2.CC_STAT_HEIGHT])
-            #candidates.append((initial_point, final_point, area))
+            #points.append((initial_point, final_point, area))
             
             if inSquare(road_points, centroid, 'bottom-up'):
+                
                 vehicle_counter += 1
                 cv2.rectangle(frame, initial_point, final_point, (0, 0, 255), 1)
                 cv2.circle(frame, centroid, 3, (0,255,255), -1)
@@ -35,7 +49,12 @@ def detectVehicle(stats, centroids, frame, frame_id, vehicle_counter):
                     initial_point_text, 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255), 1
                 )
-    return vehicle_counter, frame
+                if buffer_frames:
+                    getEuclidean(centroid, buffer_frames)
+                points.append(centroid)
+    if points:
+        buffer_frames = addFrame(points, buffer_frames, 10)
+    return vehicle_counter, buffer_frames, frame
 
 
 def classify(area, width, height):
@@ -62,8 +81,12 @@ def inSquare(area, point, way):
         else:
             return False
 
-#def tracking(centroid):
-
+def findVehicle(points, max_distance=40):
+    for vehicle in vehicles:
+        for point in points:
+            if distance(vehicle.current_pose, point) <= max_distance:
+                #O ponto é um rastro do veículo
+                pass
 
 def addFrame(frame, buffer, max_size=10):
     if len(buffer) >= max_size:
@@ -97,23 +120,21 @@ cv2.namedWindow('Track')
 while capture.isOpened():
     frame_id = int(capture.get(1))
     ret, frame = capture.read()
-    buffer_frames = addFrame(frame, buffer_frames, 50)
     
     bkframe = backsub.apply(frame, None, 0.01)
     bkframe = cv2.medianBlur(bkframe, 7)
     bkframe = cv2.blur(bkframe, (7,7))
-    cv2.polylines(frame, [road_area], True, (0,255,0), 3)
 
     num, labels, stats, centroids = cv2.connectedComponentsWithStats(bkframe, ltype=cv2.CV_16U)
-    candidates = list()
 
-    vehicle_counter, frame = detectVehicle(stats, centroids, frame, vehicle_counter)
+    vehicle_counter, buffer_frames, frame = detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicle_counter)
 
+    cv2.polylines(frame, [road_area], True, (0,255,0), 3)
     cv2.putText(frame,'COUNT: %r' %vehicle_counter, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
 
     cv2.imshow('Track', frame)
     cv2.imshow('Background', bkframe)
-    #time.sleep(1)
+    time.sleep(2)
 
     if cv2.waitKey(100) == ord('q'):
             break
