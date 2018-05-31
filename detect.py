@@ -1,4 +1,4 @@
-from Vehicle import Vehicle
+import Vehicle
 from cartesian import distance
 import numpy as np
 import cv2
@@ -12,7 +12,7 @@ MIN_AREA = 500
 def on_mouse(event, x, y, buttons, user_param):
     if event == cv2.EVENT_LBUTTONDOWN:
         polygon.append([x, y])
-'''
+'''   
 
 def detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, road_points):
     points = list()
@@ -23,22 +23,22 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, ro
 
         if (area >= MIN_AREA) and inSquare(road_points, centroid, 'bottom-up'):
             if not vehicles:
-                vehicles.append(Vehicle(len(vehicles), frame_id, centroid, stat))
+                vehicles.append(Vehicle.Vehicle(len(vehicles), frame_id, centroid, stat))
             else:
                 points.append([centroid, stat])
-            drawVehicle(frame, stat, area, centroid, vehicles[-1].vid)
             
     if buffer_frames:
         vehicles = findVehicles(vehicles, buffer_frames[0], frame_id, 30)
+    print(points)
     if points:
         buffer_frames = addFrame(points, buffer_frames, 1)
     return buffer_frames, frame
 
-def inSquare(area, point, way):
-    high_y = area[1][1]
-    low_y = area[0][1]
-    high_x = int((area[2][0]+area[3][0])/2) + 5
-    low_x = int((area[0][0]+area[1][0])/2) - 5
+def inSquare(road_area, point, way):
+    high_y = road_area[1][1]
+    low_y = road_area[0][1]
+    high_x = int((road_area[2][0]+road_area[3][0])/2) + 5
+    low_x = int((road_area[0][0]+road_area[1][0])/2) - 5
     if way == 'bottom-up':
         in_y = point[1] < high_y and point[1] > low_y
         in_x = point[0] < high_x and point[0] > low_x
@@ -51,7 +51,7 @@ def findVehicles(vehicles, points, frame_id, max_distance=40):
     for vehicle in vehicles:
         found = False
         for point in points:
-            if distance(vehicle.current_pose, point[0]) <= max_distance:
+            if distance(vehicle.getCurrentPose(), point[0]) <= max_distance:
                 vehicle.setCurrentPose(point[0], point[1], frame_id)
                 points.remove(point)
                 found = True
@@ -60,7 +60,7 @@ def findVehicles(vehicles, points, frame_id, max_distance=40):
             vehicle.incrementNoFrame()
     if points:
         for point in points:
-            vehicles.append(Vehicle(len(vehicles), frame_id, point[0], point[1]))
+            vehicles.append(Vehicle.Vehicle(len(vehicles), frame_id, point[0], point[1]))
     return vehicles
 
 def addFrame(frame, buffer, max_size=10):
@@ -101,15 +101,17 @@ def main():
 
         buffer_frames, frame = detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, road_points)
         for vehicle in vehicles:
-            vehicle.show()
-            vehicle.drawTrack(frame)
+            if not vehicle.isHide():
+                vehicle.show()
+                vehicle.drawVehicle(frame)
+                vehicle.drawTrack(frame)
 
         cv2.polylines(frame, [road_area], True, (0,255,0), 3)
         #cv2.putText(frame,'COUNT: %r' %vehicle_counter, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
 
         cv2.imshow('Track', frame)
         cv2.imshow('Background', bkframe)
-        time.sleep(1)
+        time.sleep(0.5)
 
         if cv2.waitKey(100) == ord('q'):
                 break
