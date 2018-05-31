@@ -1,3 +1,4 @@
+from Vehicle import Vehicle
 import numpy as np
 import cv2
 import sys
@@ -9,13 +10,15 @@ def on_mouse(event, x, y, buttons, user_param):
         polygon.append([x, y])
 '''
 
-def detectVehicle(stats, centroids, frame, cars):
+def detectVehicle(stats, centroids, frame, frame_id, vehicle_counter):
     for i in range(len(stats)):
         stat = stats[i]
         area = stat[cv2.CC_STAT_AREA]
         centroid = (int(centroids[i][0]), int(centroids[i][1]))
-
+        
         if area >= min_area:
+            vehicle_id = str(frame_id) + str(centroid[0]) + str(centroid[1])
+            vehicles.append(Vehicle(vehicle_id, frame, centroid))
             
             initial_point = (stat[cv2.CC_STAT_LEFT], stat[cv2.CC_STAT_TOP])
             initial_point_text = (initial_point[0], initial_point[1] - 5)
@@ -23,7 +26,7 @@ def detectVehicle(stats, centroids, frame, cars):
             #candidates.append((initial_point, final_point, area))
             
             if inSquare(road_points, centroid, 'bottom-up'):
-                cars += 1
+                vehicle_counter += 1
                 cv2.rectangle(frame, initial_point, final_point, (0, 0, 255), 1)
                 cv2.circle(frame, centroid, 3, (0,255,255), -1)
                 cv2.putText(
@@ -32,8 +35,7 @@ def detectVehicle(stats, centroids, frame, cars):
                     initial_point_text, 
                     cv2.FONT_HERSHEY_SIMPLEX, 0.3, (0, 0, 255), 1
                 )
-    
-    return cars, frame
+    return vehicle_counter, frame
 
 
 def classify(area, width, height):
@@ -60,6 +62,8 @@ def inSquare(area, point, way):
         else:
             return False
 
+#def tracking(centroid):
+
 
 def addFrame(frame, buffer, max_size=10):
     if len(buffer) >= max_size:
@@ -67,9 +71,14 @@ def addFrame(frame, buffer, max_size=10):
     buffer.insert(0, frame)
     return buffer
 
+
+#def inCars(centroid):
+
+
 VIDEO_SOURCE = sys.argv[1]
 min_area = 500
-cars = 0
+vehicles = list()
+vehicle_counter = 0
 buffer_frames = list()
 
 capture = cv2.VideoCapture(VIDEO_SOURCE)
@@ -85,9 +94,10 @@ cv2.namedWindow('Background')
 cv2.moveWindow('Background', 400, 0)
 cv2.namedWindow('Track')
 
-while True:
+while capture.isOpened():
+    frame_id = int(capture.get(1))
     ret, frame = capture.read()
-    buffer_frames = addFrame(frame, buffer_frames, 10)
+    buffer_frames = addFrame(frame, buffer_frames, 50)
     
     bkframe = backsub.apply(frame, None, 0.01)
     bkframe = cv2.medianBlur(bkframe, 7)
@@ -97,13 +107,13 @@ while True:
     num, labels, stats, centroids = cv2.connectedComponentsWithStats(bkframe, ltype=cv2.CV_16U)
     candidates = list()
 
-    cars, frame = detectVehicle(stats, centroids, frame, cars)
+    vehicle_counter, frame = detectVehicle(stats, centroids, frame, vehicle_counter)
 
-    cv2.putText(frame,'COUNT: %r' %cars, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+    cv2.putText(frame,'COUNT: %r' %vehicle_counter, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
 
     cv2.imshow('Track', frame)
     cv2.imshow('Background', bkframe)
-    time.sleep(1)
+    #time.sleep(1)
 
     if cv2.waitKey(100) == ord('q'):
             break
