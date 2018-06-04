@@ -13,10 +13,9 @@ def on_mouse(event, x, y, buttons, user_param):
         polygon.append([x, y])
 """   
 
-#def inCars(centroid):
-
 VIDEO_SOURCE = sys.argv[1]
 MIN_AREA = 500
+MAX_DISTANCE = 20
 
 def main():
     vehicles = list()
@@ -57,7 +56,7 @@ def main():
 
         cv2.imshow('Track', frame)
         cv2.imshow('Background', bkframe)
-        #time.sleep(0.5)
+        time.sleep(1)
 
         if cv2.waitKey(100) == ord('q'):
                 break

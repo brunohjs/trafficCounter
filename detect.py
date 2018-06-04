@@ -15,9 +15,10 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer_frames, vehicles, ro
                 vehicles.append(Vehicle.Vehicle(len(vehicles), frame_id, centroid, stat))
             else:
                 points.append([centroid, stat])
+                cv2.circle(frame, centroid, 3, (127,127,255), -1)
             
     if buffer_frames:
-        vehicles = findVehicles(vehicles, buffer_frames[0], frame_id, 30)
+        vehicles = findVehicles(vehicles, buffer_frames[0], frame_id, main.MAX_DISTANCE)
     print(points)
     if points:
         buffer_frames = addFrame(points, buffer_frames, 1)
