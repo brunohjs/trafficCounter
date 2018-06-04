@@ -1,5 +1,5 @@
 import cartesian
-import detect
+import main
 import numpy as np
 import cv2
 
@@ -60,7 +60,7 @@ class Vehicle:
     def classify(self, width, height):
         area = self.getArea()
         #car = (area <= MIN_AREA+(MIN_AREA*1.0)) and (area > MIN_AREA)
-        truck = area > detect.MIN_AREA*4
+        truck = area > main.MIN_AREA*4
         if truck:
             return 'truck'
         else:
