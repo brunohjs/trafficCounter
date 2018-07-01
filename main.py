@@ -17,6 +17,9 @@ MAX_DISTANCE = 20
 MEDIA_BLUR = 7
 BLUR = 7
 
+SENSIBILITY = 10
+N_FRAMES_OUT = 15
+
 'Função de aprendizado do background'
 def learnSub(backsub, video_source, n_frames=50):
     capture = cv2.VideoCapture(VIDEO_SOURCE)
@@ -50,16 +53,16 @@ def main():
     width = int(capture.get(3))
     
 
-    if VIDEO_SOURCE == 'video.mp4':
+    if 'video.mp4' in VIDEO_SOURCE:
         road_line_left = [(60, 180), (210, 180)]
         road_line_right = [(210, 180), (350, 180)]
-    elif VIDEO_SOURCE == 'video2.mp4':
+    elif 'video2.mp4' in VIDEO_SOURCE:
         road_line_left = [(0, 220), (175, 220)]
         road_line_right = [(175, 220), (350, 220)]
-    elif VIDEO_SOURCE == 'video3.mp4':
+    elif 'video3.mp4' in VIDEO_SOURCE:
         road_line_left = [(0, 220), (170, 220)]
         road_line_right = [(170, 220), (350, 220)]
-    elif VIDEO_SOURCE == 'video4.mp4':
+    elif 'video4.mp4' in VIDEO_SOURCE:
         road_line_left = [(0, 200), (180, 200)]
         road_line_right = [(180, 200), (350, 200)]
 
@@ -102,13 +105,15 @@ def main():
             cv2.imshow('Track', frame)
             cv2.imshow('Background', bkframe)
 
+            cv2.imwrite('img/drw2/frm'+str(frame_id)+'.png', frame)
+
             if cv2.waitKey(100) == ord('q') or not capture.isOpened():
                 break
         except Exception as e:
             print(e)
             break
 
-    count_left, count_right, buffer_vehicles = detect.countVehicles(buffer_vehicles, frame_id, MAX_DISTANCE, final=True)
+    count_left, count_right, buffer_vehicles = detect.countVehicles(buffer_vehicles, frame_id, MAX_DISTANCE, N_FRAMES_OUT, final=True)
     vehicle_counter_left += count_left
     vehicle_counter_right += count_right
     logger(buffer_vehicles, frame_id, vehicle_counter_left, vehicle_counter_right)
