@@ -99,11 +99,8 @@ def main():
                 width
             )
             
-
-            #cv2.imwrite('img/drw2/frm'+str(frame_id)+'.png', frame)
-            
             cv2.imshow('Track', frame)
-            #cv2.imshow('Background', bkframe)
+            cv2.imshow('Background', bkframe)
 
             if cv2.waitKey(100) == ord('q') or not capture.isOpened():
                 break

@@ -34,7 +34,6 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer, road_line_left, roa
         
     if buffer:
         n_left, n_right, buffer = countVehicles(buffer, frame_id, main.MAX_DISTANCE)
-    #n_vehicles = 0
 
     return n_left, n_right, buffer, frame
 

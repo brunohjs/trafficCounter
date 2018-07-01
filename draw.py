@@ -4,7 +4,6 @@
 import cv2
 
 def drawPanel(frame, road_left, road_right, count_left, count_right, width):
-    
     cv2.line(frame, road_left[0], road_left[1], (100,255,0), 3)
     cv2.rectangle(frame, (0,0), (30,30), (230, 255, 180), -1)
     cv2.rectangle(frame, (0,0), (30,30), (100,255,0), 2)
