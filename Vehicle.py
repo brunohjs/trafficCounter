@@ -3,8 +3,6 @@ import main
 import numpy as np
 import cv2
 
-NUM_MAX_NO_FRAME = 10
-
 class Vehicle:
     def __init__(self, vid, frame, centroid, stat):
         self.vid = vid
@@ -30,7 +28,7 @@ class Vehicle:
 
     def incrementNoFrame(self):
         self.no_frame += 1
-        if self.no_frame == NUM_MAX_NO_FRAME:
+        if self.no_frame == main.NUM_MAX_NO_FRAME:
             self.hide = True
 
     def show(self):
@@ -52,7 +50,7 @@ class Vehicle:
         initial_point_text = (initial_point[0], initial_point[1] - 5)
         cv2.rectangle(frame, initial_point, final_point, (0, 0, 255), 1)
         cv2.circle(frame, self.current_pose, 3, (0,255,255), -1)
-        cv2.circle(frame, self.current_pose, main.MAX_DISTANCE, (0,64,255), 0)
+        #cv2.circle(frame, self.current_pose, main.MAX_DISTANCE, (0,64,255), 0)
         cv2.putText(
             frame, 
             self.classify(self.stat[cv2.CC_STAT_WIDTH], self.stat[cv2.CC_STAT_HEIGHT])+' '+str(self.vid),

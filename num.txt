@@ -1,0 +1,4 @@
+video1, fácil, 34, 34
+video2, chuva e carro 'parado', 26, 24
+video3, engarrafamento, 26, 25
+video4, noite, 17, 22
