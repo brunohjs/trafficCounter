@@ -1,3 +1,5 @@
+#!/usr/bin/env python
+#coding: utf-8
 
 import detect
 import cartesian
@@ -77,7 +79,9 @@ def main():
             logger(buffer_vehicles, frame_id, vehicle_counter)
 
             cv2.line(frame, road_line[0], road_line[1], (0,255,0), 3)
-            cv2.putText(frame,'COUNT: %r' %vehicle_counter, (10, 60), cv2.FONT_HERSHEY_SIMPLEX, 0.7, (255, 0, 0), 2)
+            cv2.rectangle(frame, (0,0), (30,30), (251, 130, 110), -1)
+            cv2.rectangle(frame, (0,0), (30,30), (251, 66, 27), 2)
+            cv2.putText(frame,'%2r' %vehicle_counter, (5, 20), cv2.FONT_HERSHEY_SIMPLEX, 0.5, (166, 98, 3), 2)
 
             #cv2.imwrite('img/drw2/frm'+str(frame_id)+'.png', frame)
             
