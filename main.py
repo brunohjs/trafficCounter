@@ -10,6 +10,7 @@ import cv2
 import sys
 import time
 
+
 VIDEO_SOURCE = sys.argv[1]
 MIN_AREA = 300
 MAX_DISTANCE = 20
@@ -19,6 +20,11 @@ BLUR = 7
 
 SENSIBILITY = 10
 N_FRAMES_OUT = 15
+
+'Parâmetros que definem as linhas de contagem da estrada'
+'Padrão: [(x1, y1), (x2, y2)]'
+ROAD_LINE_LEFT = [(60, 180), (210, 180)]
+ROAD_LINE_RIGHT = [(210, 180), (350, 180)]
 
 'Função de aprendizado do background'
 def learnSub(backsub, video_source, n_frames=50):
@@ -53,6 +59,8 @@ def main():
     width = int(capture.get(3))
     
 
+    #Trecho de código utilizado para os testes de entrada
+    '''
     if 'video.mp4' in VIDEO_SOURCE:
         road_line_left = [(60, 180), (210, 180)]
         road_line_right = [(210, 180), (350, 180)]
@@ -65,6 +73,7 @@ def main():
     elif 'video4.mp4' in VIDEO_SOURCE:
         road_line_left = [(0, 200), (180, 200)]
         road_line_right = [(180, 200), (350, 200)]
+    '''
 
     cv2.namedWindow('Background')
     cv2.moveWindow('Background', 400, 0)
@@ -86,8 +95,8 @@ def main():
                 frame, 
                 frame_id, 
                 buffer_vehicles,
-                road_line_left,
-                road_line_right)
+                ROAD_LINE_LEFT,
+                ROAD_LINE_RIGHT)
             
             vehicle_counter_left += count_left
             vehicle_counter_right += count_right
@@ -95,8 +104,8 @@ def main():
             
             draw.drawPanel(
                 frame,
-                road_line_left,
-                road_line_right,
+                ROAD_LINE_LEFT,
+                ROAD_LINE_RIGHT,
                 vehicle_counter_left,
                 vehicle_counter_right,
                 width
@@ -105,7 +114,7 @@ def main():
             cv2.imshow('Track', frame)
             cv2.imshow('Background', bkframe)
 
-            cv2.imwrite('img/drw2/frm'+str(frame_id)+'.png', frame)
+            #cv2.imwrite('img/drw2/frm'+str(frame_id)+'.png', frame)
 
             if cv2.waitKey(100) == ord('q') or not capture.isOpened():
                 break
