@@ -12,7 +12,7 @@ import time
 
 
 VIDEO_SOURCE = sys.argv[1]
-MIN_AREA = 300
+MIN_AREA = 250
 MAX_DISTANCE = 20
 
 MEDIA_BLUR = 7
@@ -20,6 +20,7 @@ BLUR = 7
 
 SENSIBILITY = 10
 N_FRAMES_OUT = 15
+FRAMES_LEARN = 100
 
 'Parâmetros que definem as linhas de contagem da estrada'
 'Padrão: [(x1, y1), (x2, y2)]'
@@ -54,26 +55,26 @@ def main():
     vehicle_counter_right = 0
 
     backsub = cv2.bgsegm.createBackgroundSubtractorMOG(nmixtures=3)
-    bkframe = learnSub(backsub, VIDEO_SOURCE, 100)
+    bkframe = learnSub(backsub, VIDEO_SOURCE, FRAMES_LEARN)
     capture = cv2.VideoCapture(VIDEO_SOURCE)
     width = int(capture.get(3))
     
 
     #Trecho de código utilizado para os testes de entrada
-    '''
+
     if 'video.mp4' in VIDEO_SOURCE:
-        road_line_left = [(60, 180), (210, 180)]
-        road_line_right = [(210, 180), (350, 180)]
+        ROAD_LINE_LEFT = [(60, 180), (210, 180)]
+        ROAD_LINE_RIGHT = [(210, 180), (350, 180)]
     elif 'video2.mp4' in VIDEO_SOURCE:
-        road_line_left = [(0, 220), (175, 220)]
-        road_line_right = [(175, 220), (350, 220)]
+        ROAD_LINE_LEFT = [(0, 220), (175, 220)]
+        ROAD_LINE_RIGHT = [(175, 220), (350, 220)]
     elif 'video3.mp4' in VIDEO_SOURCE:
-        road_line_left = [(0, 220), (170, 220)]
-        road_line_right = [(170, 220), (350, 220)]
+        ROAD_LINE_LEFT = [(0, 220), (170, 220)]
+        ROAD_LINE_RIGHT = [(170, 220), (350, 220)]
     elif 'video4.mp4' in VIDEO_SOURCE:
-        road_line_left = [(0, 200), (180, 200)]
-        road_line_right = [(180, 200), (350, 200)]
-    '''
+        ROAD_LINE_LEFT = [(0, 200), (180, 200)]
+        ROAD_LINE_RIGHT = [(180, 200), (350, 200)]
+
 
     cv2.namedWindow('Background')
     cv2.moveWindow('Background', 400, 0)
@@ -114,7 +115,7 @@ def main():
             cv2.imshow('Track', frame)
             cv2.imshow('Background', bkframe)
 
-            #cv2.imwrite('img/drw2/frm'+str(frame_id)+'.png', frame)
+            #cv2.imwrite('img/normal/background/'+str(frame_id)+'f.png', bkframe)
 
             if cv2.waitKey(100) == ord('q') or not capture.isOpened():
                 break
