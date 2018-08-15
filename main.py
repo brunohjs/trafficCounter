@@ -10,12 +10,22 @@ import cv2
 import sys
 import time
 
+
 VIDEO_SOURCE = sys.argv[1]
-MIN_AREA = 300
+MIN_AREA = 250
 MAX_DISTANCE = 20
 
 MEDIA_BLUR = 7
 BLUR = 7
+
+SENSIBILITY = 10
+N_FRAMES_OUT = 15
+FRAMES_LEARN = 100
+
+'Parâmetros que definem as linhas de contagem da estrada'
+'Padrão: [(x1, y1), (x2, y2)]'
+ROAD_LINE_LEFT = [(60, 180), (210, 180)]
+ROAD_LINE_RIGHT = [(210, 180), (350, 180)]
 
 'Função de aprendizado do background'
 def learnSub(backsub, video_source, n_frames=50):
@@ -45,23 +55,26 @@ def main():
     vehicle_counter_right = 0
 
     backsub = cv2.bgsegm.createBackgroundSubtractorMOG(nmixtures=3)
-    bkframe = learnSub(backsub, VIDEO_SOURCE, 100)
+    bkframe = learnSub(backsub, VIDEO_SOURCE, FRAMES_LEARN)
     capture = cv2.VideoCapture(VIDEO_SOURCE)
     width = int(capture.get(3))
     
 
-    if VIDEO_SOURCE == 'video.mp4':
-        road_line_left = [(60, 180), (210, 180)]
-        road_line_right = [(210, 180), (350, 180)]
-    elif VIDEO_SOURCE == 'video2.mp4':
-        road_line_left = [(0, 220), (175, 220)]
-        road_line_right = [(175, 220), (350, 220)]
-    elif VIDEO_SOURCE == 'video3.mp4':
-        road_line_left = [(0, 220), (170, 220)]
-        road_line_right = [(170, 220), (350, 220)]
-    elif VIDEO_SOURCE == 'video4.mp4':
-        road_line_left = [(0, 200), (180, 200)]
-        road_line_right = [(180, 200), (350, 200)]
+    #Trecho de código utilizado para os testes de entrada
+
+    if 'video.mp4' in VIDEO_SOURCE:
+        ROAD_LINE_LEFT = [(60, 180), (210, 180)]
+        ROAD_LINE_RIGHT = [(210, 180), (350, 180)]
+    elif 'video2.mp4' in VIDEO_SOURCE:
+        ROAD_LINE_LEFT = [(0, 220), (175, 220)]
+        ROAD_LINE_RIGHT = [(175, 220), (350, 220)]
+    elif 'video3.mp4' in VIDEO_SOURCE:
+        ROAD_LINE_LEFT = [(0, 220), (170, 220)]
+        ROAD_LINE_RIGHT = [(170, 220), (350, 220)]
+    elif 'video4.mp4' in VIDEO_SOURCE:
+        ROAD_LINE_LEFT = [(0, 200), (180, 200)]
+        ROAD_LINE_RIGHT = [(180, 200), (350, 200)]
+
 
     cv2.namedWindow('Background')
     cv2.moveWindow('Background', 400, 0)
@@ -83,8 +96,8 @@ def main():
                 frame, 
                 frame_id, 
                 buffer_vehicles,
-                road_line_left,
-                road_line_right)
+                ROAD_LINE_LEFT,
+                ROAD_LINE_RIGHT)
             
             vehicle_counter_left += count_left
             vehicle_counter_right += count_right
@@ -92,8 +105,8 @@ def main():
             
             draw.drawPanel(
                 frame,
-                road_line_left,
-                road_line_right,
+                ROAD_LINE_LEFT,
+                ROAD_LINE_RIGHT,
                 vehicle_counter_left,
                 vehicle_counter_right,
                 width
@@ -102,13 +115,15 @@ def main():
             cv2.imshow('Track', frame)
             cv2.imshow('Background', bkframe)
 
+            #cv2.imwrite('img/normal/background/'+str(frame_id)+'f.png', bkframe)
+
             if cv2.waitKey(100) == ord('q') or not capture.isOpened():
                 break
         except Exception as e:
             print(e)
             break
 
-    count_left, count_right, buffer_vehicles = detect.countVehicles(buffer_vehicles, frame_id, MAX_DISTANCE, final=True)
+    count_left, count_right, buffer_vehicles = detect.countVehicles(buffer_vehicles, frame_id, MAX_DISTANCE, N_FRAMES_OUT, final=True)
     vehicle_counter_left += count_left
     vehicle_counter_right += count_right
     logger(buffer_vehicles, frame_id, vehicle_counter_left, vehicle_counter_right)

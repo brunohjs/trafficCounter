@@ -15,7 +15,7 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer, road_line_left, roa
         centroid = (int(centroids[i][0]), int(centroids[i][1]))
         if area >= main.MIN_AREA:
             draw.drawArea(frame, stat, centroid, area, (62,253,220))
-            if inLine(road_line_left, centroid):
+            if inLine(road_line_left, centroid, main.SENSIBILITY):
                 draw.drawArea(frame, stat, centroid, area, (251,66,27))
                 buffer.append({
                     'id': frame_id,
@@ -23,7 +23,7 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer, road_line_left, roa
                     'area' : area,
                     'route' : 'L'
                 })
-            elif inLine(road_line_right, centroid):
+            elif inLine(road_line_right, centroid, main.SENSIBILITY):
                 draw.drawArea(frame, stat, centroid, area, (251,66,27))
                 buffer.append({
                     'id': frame_id,
@@ -33,7 +33,7 @@ def detectVehicle(stats, centroids, frame, frame_id, buffer, road_line_left, roa
                 })
         
     if buffer:
-        n_left, n_right, buffer = countVehicles(buffer, frame_id, main.MAX_DISTANCE)
+        n_left, n_right, buffer = countVehicles(buffer, frame_id, main.MAX_DISTANCE, main.N_FRAMES_OUT)
 
     return n_left, n_right, buffer, frame
 
@@ -45,7 +45,7 @@ def inLine(road_line, point, sensibility=10):
     else:
         return False
 
-def countVehicles(buffer, current_frame_id, max_distance=30, final=False):
+def countVehicles(buffer, current_frame_id, max_distance=30, n_frames=15, final=False):
     count_left = 0
     count_right = 0
     i = 0
@@ -62,7 +62,7 @@ def countVehicles(buffer, current_frame_id, max_distance=30, final=False):
         i += 1
 
     for vehicle in buffer:
-        if abs(vehicle['id'] - current_frame_id) >= 15:
+        if abs(vehicle['id'] - current_frame_id) >= n_frames:
             if vehicle['route'] == 'L':
                 count_left += 1
             else:

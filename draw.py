@@ -19,4 +19,4 @@ def drawArea(frame, stat, centroid, area, color=(0,255,255)):
     initial_point = (stat[cv2.CC_STAT_LEFT], stat[cv2.CC_STAT_TOP])
     final_point = (initial_point[0] + stat[cv2.CC_STAT_WIDTH], initial_point[1] + stat[cv2.CC_STAT_HEIGHT])
     cv2.rectangle(frame, initial_point, final_point, (0, 0, 255), 1)
-    cv2.circle(frame, centroid, 3, color, -1)
+    #cv2.circle(frame, centroid, 3, color, -1)
